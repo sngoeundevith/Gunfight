@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="km"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ប្រជែងចំនួនគត់</title>
+<link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Moul&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#10243f;--p1:#1f6feb;--p2:#e5484d;--ink:#fff;--card:#1b3a63;--ok:#2ea043}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1a2e}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:'Battambang',system-ui,sans-serif;overflow:hidden}
+#g{height:100%;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.panel{flex:1;display:flex;flex-direction:column;gap:6px;padding:8px;min-height:0}
+.panel.t{transform:rotate(180deg)}
+.hp{display:flex;align-items:center;gap:8px;font-size:14px}
+.bar{flex:1;height:12px;background:#0006;border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:var(--ok);transition:width .3s}
+.q{font-family:'Times New Roman',Times,serif;font-weight:700;font-size:clamp(26px,7vw,38px);text-align:center;background:var(--card);border-radius:12px;padding:8px}
+.ch{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1}
+.ch button{font:700 clamp(24px,6vw,34px) 'Times New Roman',Times,serif;border:0;border-radius:12px;color:#fff;background:var(--c)}
+.ch button:disabled{opacity:.35}
+.ch button.bad{background:#555}
+.act{display:flex;gap:6px}
+.act button{flex:1;font:700 16px 'Battambang';padding:10px;border:0;border-radius:12px;color:#fff}
+.dodge{background:#7c3aed}.fire{background:#f59e0b;display:none}.fire.on{display:block;animation:p .4s infinite alternate}
+@keyframes p{to{transform:scale(1.06)}}
+#arena{position:relative;height:220px;background:linear-gradient(#0003,#0000,#0003);border-block:2px dashed #fff3;flex:none}
+.av{position:absolute;top:50%;width:72px;height:79px;margin-top:-40px;transition:transform .15s}.arm{transition:transform .35s;transform-origin:50px 42px}.av.aim .arm{transform:rotate(-90deg)}.fl{opacity:0}.lg{transform-box:fill-box;transform-origin:50% 0}.arm2{transform-origin:40px 44px}.av.run .lg.a{animation:run .18s infinite alternate}.av.run .lg.b{animation:run .18s infinite alternate-reverse}.av.run .arm{animation:run .18s infinite alternate-reverse}.av.run svg{animation:bob .18s infinite}@keyframes run{from{transform:rotate(-40deg)}to{transform:rotate(40deg)}}@keyframes bob{50%{translate:0 -5px}}.av.shot .fl{animation:fl .25s}@keyframes fl{0%{opacity:1}100%{opacity:0}}.av svg{display:block}
+.av.dd{transform:translateY(-60px)}.av.dn{transform:translateY(60px)}.av svg{width:72px;height:79px}.av .s{display:none}.av.aim .f,.av.run .f{display:none}.av.aim .s,.av.run .s{display:block}
+#a0{left:6%}#a1{right:6%}
+.av.hit{filter:drop-shadow(0 0 12px red);animation:sh .3s}
+@keyframes sh{50%{transform:rotate(15deg)}}
+.cr{position:absolute;top:50%;font-size:30px;transform:translate(-50%,-50%);display:none}
+#c0{left:calc(94% - 29px)}#c1{left:calc(6% + 29px)}
+.bul{position:absolute;top:50%;left:0;font-size:22px;display:none;transform:translate(-50%,-50%)}
+#msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 22px 'Moul';text-shadow:0 2px 6px #000;pointer-events:none;text-align:center}
+#tm{position:absolute;left:0;bottom:0;height:4px;background:#fbbf24;width:100%}
+#ov{position:fixed;inset:0;background:#000b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;z-index:9}
+#ov h1{font:400 28px 'Moul';margin:0;padding:0 12px}
+#ov button{font:700 20px 'Battambang';padding:12px 28px;border:0;border-radius:14px;background:var(--ok);color:#fff}
+</style></head><body>
+<div id="g">
+<div class="panel t" id="P1"></div>
+<div id="arena"><div class="av" id="a1"></div><div class="av" id="a0"></div>
+<div class="cr" id="c0">🎯</div><div class="cr" id="c1">🎯</div><div class="bul" id="bl">🔸</div>
+<div id="msg"></div><div id="tm"></div></div>
+<div class="panel" id="P0"></div>
+</div>
+<div id="ov"><h1>ប្រជែងចំនួនគត់</h1><div>ឆ្លើយត្រូវមុន = បាញ់ · ឆ្លើយខុស = ដៃគូបាញ់<br>ត្រូវ ១០ គ្រាប់ = ស្លាប់</div><button id="go">ចាប់ផ្ដើម</button></div>
+<script>
+const COL=['var(--p1)','var(--p2)'],$=id=>document.getElementById(id);
+let hp,bul,phase,ans,locked,dUntil,dCd,shooter,aimX,tmr,raf,qTimer;
+const P=[$('P0'),$('P1')];
+P.forEach((p,i)=>{p.innerHTML=`<div class="hp"><span>${i?'ក្រហម':'ខៀវ'}</span><div class="bar"><i id="h${i}"></i></div><b id="n${i}" style="font-family:'Times New Roman',Times,serif;font-size:20px">10</b></div>
+<div class="q" id="q${i}"></div><div class="ch" id="ch${i}"></div>
+<div class="act"><button class="dodge" id="d${i}">ជៀស 🛡️</button><button class="dodge" id="e${i}">រត់ចុះ ⬇️</button><button class="fire" id="f${i}">បាញ់ 🔫</button></div>`;
+$('d'+i).textContent='រត់ឡើង ⬆️';$('d'+i).onpointerdown=()=>dodge(i,-1);$('e'+i).onpointerdown=()=>dodge(i,1);$('f'+i).onpointerdown=()=>fire(i);});
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const sg=n=>n<0?`(−${-n})`:`${n}`;
+function gen(){const o=R(0,3);let a,b,r,t;
+ if(o==0){a=R(-9,9);b=R(-9,9);r=a+b;t=`${sg(a)} + ${sg(b)}`}
+ else if(o==1){a=R(-9,9);b=R(-9,9);r=a-b;t=`${sg(a)} − ${sg(b)}`}
+ else if(o==2){a=R(-5,5);b=R(-5,5);r=a*b;t=`${sg(a)} × ${sg(b)}`}
+ else{b=R(-5,5)||2;r=R(-5,5);a=b*r;t=`${sg(a)} ÷ ${sg(b)}`}
+ return[t,r]}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=R(0,i);[a[i],a[j]]=[a[j],a[i]]}return a}
+function msg(t,ms=900){$('msg').textContent=t;if(ms)setTimeout(()=>{if($('msg').textContent==t)$('msg').textContent=''},ms)}
+function newQ(){if(phase=='over')return;phase='q';locked=[0,0];shooter=-1;
+ $('msg').textContent='';[0,1].forEach(i=>{$('f'+i).classList.remove('on');$('c'+i).style.display='none';$('a'+i).classList.remove('aim','shot')});
+ const[t,r]=gen();ans=r;const set=new Set([r]);
+ [r+1,r-1,r+2,r-2,-r,r+10,R(-20,20)].forEach(x=>{if(set.size<4&&!set.has(x))set.add(x)});
+ const opts=[...set].slice(0,4);
+ [0,1].forEach(i=>{$('q'+i).textContent=t+' = ?';const c=$('ch'+i);c.innerHTML='';
+  shuf([...opts]).forEach((v,k)=>{const b=document.createElement('button');b.textContent=v<0?'−'+(-v):v;
+   b.style.setProperty('--c',['#2563eb','#16a34a','#d97706','#9333ea'][k]);b.dataset.v=v;
+   b.onpointerdown=()=>pick(i,v,b);c.appendChild(b)})});
+ const T=9000,s=performance.now();clearInterval(qTimer);
+ qTimer=setInterval(()=>{const k=1-(performance.now()-s)/T;$('tm').style.width=Math.max(0,k*100)+'%';
+  if(k<=0&&phase=='q'){clearInterval(qTimer);msg('អស់ម៉ោង');phase='wait';setTimeout(newQ,900)}},50)}
+function pick(i,v,b){if(phase!='q'||locked[i])return;
+ if(v==ans){clearInterval(qTimer);give(i,'ត្រូវ!')}
+ else{locked[i]=1;b.classList.add('bad');b.disabled=true;clearInterval(qTimer);give(1-i,'ខុស! ដៃគូបាញ់')}}
+function give(j,t){phase='aim';shooter=j;msg(t,700);
+ document.querySelectorAll('.ch button').forEach(b=>b.disabled=true);
+ $('f'+j).classList.add('on');$('a'+j).classList.add('aim');const c=$('c'+j);c.style.display='block';
+ const s=performance.now();cancelAnimationFrame(raf);
+ const loop=()=>{if(phase!='aim')return;aimX=50+42*Math.sin((performance.now()-s)/280);c.style.top=aimX+'%';
+  if(performance.now()-s>5000){phase='wait';c.style.display='none';$('f'+j).classList.remove('on');msg('មិនបាញ់');setTimeout(newQ,700);return}
+  raf=requestAnimationFrame(loop)};loop()}
+function dodge(i,dir){const n=performance.now();if(phase=='over'||n<dCd[i])return;
+ dUntil[i]=n+700;dCd[i]=n+1500;const a=$('a'+i),ay=i==0?dir:-dir,k=ay<0?'dd':'dn';a.classList.add(k,'run');setTimeout(()=>a.classList.remove(k,'run'),700);
+ [$('d'+i),$('e'+i)].forEach(b=>b.style.opacity=.5);setTimeout(()=>[$('d'+i),$('e'+i)].forEach(b=>b.style.opacity=1),1500)}
+function fire(i){if(phase!='aim'||i!=shooter)return;phase='fly';cancelAnimationFrame(raf);
+ const ok=Math.abs(aimX-50)<13,v=1-i,b=$('bl');snd('shot');const A=$('a'+i);A.classList.remove('shot');void A.offsetWidth;A.classList.add('shot');
+ $('f'+i).classList.remove('on');$('c'+i).style.display='none';
+ const W=$('arena').clientWidth;b.style.display='block';b.style.top=ok?'calc(50% - 8px)':(aimX+'%');
+ const from=i==0?W*.06+60:W*.94-60,to=i==0?W*.94-35:W*.06+35,s=performance.now(),D=1100;
+ const step=()=>{const k=Math.min(1,(performance.now()-s)/D);b.style.left=(from+(to-from)*k)+'px';
+  if(k<1)return requestAnimationFrame(step);
+  b.style.display='none';
+  if(ok&&performance.now()>dUntil[v]){hp[v]--;upd();snd('hit');const a=$('a'+v);a.classList.add('hit');setTimeout(()=>a.classList.remove('hit'),400);
+   if(hp[v]<=0)return end(i);msg('ត្រូវ! 💥')}
+  else msg(ok?'ជៀសផុត! 🛡️':'ខុសគោល!');
+  phase='wait';setTimeout(newQ,1000)};step()}
+function upd(){[0,1].forEach(i=>{$('h'+i).style.width=hp[i]*10+'%';$('n'+i).textContent=hp[i]})}
+function end(w){phase='over';const o=$('ov');o.style.display='flex';
+ o.innerHTML=`<h1>🏆 ${w?'ក្រហម':'ខៀវ'} ឈ្នះ!</h1><div>${!(1-w)?'ខៀវ':'ក្រហម'} ស្លាប់ហើយ 💀</div><button onclick="start()">លេងម្ដងទៀត</button>`}
+function start(){hp=[10,10];bul=[0,0];dUntil=[0,0];dCd=[0,0];upd();$('ov').style.display='none';phase='wait';newQ()}
+const side=c=>`<svg viewBox="0 0 100 110"><ellipse cx="40" cy="106" rx="22" ry="4" fill="#0006"/><g class="lg a"><rect x="31" y="68" width="10" height="32" rx="5" fill="#16307a"/><ellipse cx="38" cy="101" rx="11" ry="5" fill="#111"/></g><g class="lg b"><rect x="39" y="68" width="10" height="32" rx="5" fill="#1e3a8a"/><ellipse cx="46" cy="101" rx="11" ry="5" fill="#111"/></g><rect x="28" y="38" width="24" height="34" rx="10" fill="${c}"/><rect x="28" y="63" width="24" height="6" fill="#3a2a1a"/><rect x="35" y="33" width="10" height="8" rx="3" fill="#f2c6a0"/><circle cx="40" cy="22" r="16" fill="#f7d2ae"/><path d="M24 24Q19 3 40 3Q58 3 55 18Q48 10 40 13Q32 11 24 24Z" fill="#2b1a10"/><circle cx="35" cy="25" r="3.5" fill="#f2c6a0"/><ellipse cx="48" cy="23" rx="3" ry="3.6" fill="#fff"/><circle cx="49.2" cy="23.5" r="2" fill="#1b1b1b"/><circle cx="49.8" cy="22.6" r=".7" fill="#fff"/><path d="M44 17.5Q48 15.5 52 17.5" stroke="#2b1a10" stroke-width="1.6" fill="none"/><path d="M56 24Q60 27 56 29" stroke="#c9966f" stroke-width="1.6" fill="none"/><circle cx="46" cy="29" r="3" fill="#ff9aa2" opacity=".6"/><path d="M47 32Q51 35 54 32" stroke="#b03a3a" stroke-width="2" fill="none" stroke-linecap="round"/><g class="arm arm2"><rect x="35.5" y="44" width="9" height="25" rx="4.5" fill="${c}"/><rect x="35" y="68" width="10" height="30" rx="3" fill="#2d2d2d"/><rect x="31" y="66" width="9" height="12" rx="3" fill="#555"/><circle cx="40" cy="69" r="4.5" fill="#f2c6a0"/><g class="fl"><circle cx="40" cy="102" r="9" fill="#ffb300"/><circle cx="40" cy="102" r="4.5" fill="#fff"/></g></g></svg>`;
+const svg=(c,f)=>`<div style="${f?'transform:scaleX(-1)':''}"><div class="f">${svgFront(c,0)}</div><div class="s">${side(c)}</div></div>`;
+const svgFront=(c,f)=>`<svg viewBox="0 0 100 110" width="100" height="110" style="${f?'transform:scaleX(-1)':''}"><ellipse cx="36" cy="106" rx="24" ry="4" fill="#0006"/><g class="lg a"><rect x="23" y="68" width="10" height="32" rx="5" fill="#1e3a8a"/><ellipse cx="29" cy="101" rx="10" ry="5" fill="#111"/></g><g class="lg b"><rect x="39" y="68" width="10" height="32" rx="5" fill="#1e3a8a"/><ellipse cx="45" cy="101" rx="10" ry="5" fill="#111"/></g><rect x="10" y="42" width="9" height="24" rx="4.5" fill="${c}"/><circle cx="14.5" cy="68" r="4.5" fill="#f2c6a0"/><rect x="18" y="38" width="36" height="34" rx="11" fill="${c}"/><path d="M28 38L36 48L44 38Z" fill="#fff"/><rect x="18" y="63" width="36" height="6" fill="#3a2a1a"/><rect x="32" y="63" width="8" height="6" rx="1" fill="#f5c518"/><rect x="19" y="33" width="34" height="7" rx="3" fill="#f2c6a0"/><circle cx="20" cy="24" r="3.5" fill="#f2c6a0"/><circle cx="52" cy="24" r="3.5" fill="#f2c6a0"/><circle cx="36" cy="22" r="16" fill="#f7d2ae"/><path d="M19 22Q16 3 36 3Q56 3 53 22Q47 10 36 13Q25 10 19 22Z" fill="#2b1a10"/><ellipse cx="29.5" cy="23" rx="3.4" ry="3.8" fill="#fff"/><ellipse cx="42.5" cy="23" rx="3.4" ry="3.8" fill="#fff"/><circle cx="30.5" cy="23.5" r="2.1" fill="#1b1b1b"/><circle cx="43.5" cy="23.5" r="2.1" fill="#1b1b1b"/><circle cx="31.2" cy="22.5" r=".8" fill="#fff"/><circle cx="44.2" cy="22.5" r=".8" fill="#fff"/><path d="M25 17.5Q29 15.5 33 17.5M39 17.5Q43 15.5 47 17.5" stroke="#2b1a10" stroke-width="1.6" fill="none"/><circle cx="26" cy="29" r="3" fill="#ff9aa2" opacity=".6"/><circle cx="46" cy="29" r="3" fill="#ff9aa2" opacity=".6"/><path d="M31 30Q36 35 41 30" stroke="#b03a3a" stroke-width="2" fill="#fff" stroke-linecap="round"/><g class="arm"><rect x="46" y="42" width="9" height="27" rx="4.5" fill="${c}"/><rect x="47.5" y="68" width="6" height="19" rx="2" fill="#2d2d2d"/><rect x="44.5" y="66" width="6" height="8" rx="2" fill="#555"/><circle cx="50.5" cy="69" r="4.5" fill="#f2c6a0"/><g class="fl"><circle cx="50.5" cy="92" r="8" fill="#ffb300"/><circle cx="50.5" cy="92" r="4" fill="#fff"/></g></g></svg>`;
+const svgOld=(c,f)=>`<svg viewBox="0 0 76 110" width="76" height="110" style="${f?'transform:scaleX(-1)':''}"><rect x="22" y="62" width="10" height="36" rx="4" fill="#243b6b"/><rect x="40" y="62" width="10" height="36" rx="4" fill="#243b6b"/><ellipse cx="26" cy="100" rx="10" ry="5" fill="#222"/><ellipse cx="46" cy="100" rx="10" ry="5" fill="#222"/><rect x="18" y="36" width="36" height="34" rx="10" fill="${c}"/><rect x="8" y="40" width="11" height="26" rx="5" fill="${c}"/><rect x="48" y="44" width="24" height="10" rx="5" fill="${c}"/><circle cx="71" cy="49" r="5" fill="#f2c6a0"/><rect x="62" y="38" width="13" height="7" rx="2" fill="#333"/><circle cx="36" cy="22" r="15" fill="#f2c6a0"/><path d="M21 20Q23 4 36 5Q49 4 51 20Q45 12 36 13Q27 12 21 20Z" fill="#2b1a10"/><circle cx="31" cy="24" r="2" fill="#222"/><circle cx="41" cy="24" r="2" fill="#222"/><path d="M31 30Q36 34 41 30" stroke="#a33" stroke-width="2" fill="none"/></svg>`;
+$('a0').innerHTML=svg('#2563eb');$('a1').innerHTML=svg('#dc2626',1);
+let AC;const snd=k=>{try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state=='suspended')AC.resume();const t=AC.currentTime,o=AC.createOscillator(),og=AC.createGain();
+ if(k=='shot'){const n=AC.sampleRate*.25,buf=AC.createBuffer(1,n,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=buf;f.type='lowpass';f.frequency.setValueAtTime(5000,t);f.frequency.exponentialRampToValueAtTime(300,t+.25);g.gain.value=.7;s.connect(f);f.connect(g);g.connect(AC.destination);s.start(t);o.frequency.setValueAtTime(180,t);o.frequency.exponentialRampToValueAtTime(40,t+.15);og.gain.setValueAtTime(.8,t);og.gain.exponentialRampToValueAtTime(.001,t+.18)}
+ else{o.type='triangle';o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(45,t+.25);og.gain.setValueAtTime(.9,t);og.gain.exponentialRampToValueAtTime(.001,t+.28)}
+ o.connect(og);og.connect(AC.destination);o.start(t);o.stop(t+.3)}catch(e){}};
+$('go').onclick=start;
+</script><style>.av{transition:none}.av.dead{rotate:90deg;opacity:.55}.av.hurt svg{filter:drop-shadow(0 0 6px red) brightness(1.4);animation:hurt .4s}@keyframes hurt{25%{translate:-6px 0}75%{translate:6px 0}}.pop{position:absolute;left:20px;top:-18px;font-size:26px;animation:pp .9s forwards;pointer-events:none}@keyframes pp{to{transform:translateY(-30px);opacity:0}}.dodge{touch-action:none}</style><script>
+let Y=[0,0],T=[0,0],mv=[0,0],lastT=0;const LIM=68,SP=300,STEP=34;
+document.oncontextmenu=e=>e.preventDefault();
+[0,1].forEach(i=>{const hold=(id,dir)=>{const b=$(id),d=i==0?dir:-dir;b.onpointerdown=e=>{e.preventDefault();if(phase=='over')return;T[i]=Math.max(-LIM,Math.min(LIM,T[i]+d*STEP))}};hold('d'+i,-1);hold('e'+i,1)});
+function tick(t){const dt=Math.min(.05,(t-lastT)/1000||0);lastT=t;
+ [0,1].forEach(i=>{const a=$('a'+i),df=T[i]-Y[i];Y[i]+=Math.sign(df)*Math.min(Math.abs(df),SP*dt);a.style.transform=`translateY(${Y[i]}px)`;a.classList.toggle('run',Math.abs(T[i]-Y[i])>.5)});requestAnimationFrame(tick)}
+requestAnimationFrame(tick);
+function give(j,t){phase='aim';shooter=j;msg(t,700);document.querySelectorAll('.ch button').forEach(b=>b.disabled=true);
+ $('f'+j).classList.add('on');$('a'+j).classList.add('aim');const c=$('c'+j);c.style.display='block';
+ const s=performance.now(),v=1-j;cancelAnimationFrame(raf);
+ const loop=()=>{if(phase!='aim')return;const H=$('arena').clientHeight;aimX=Math.max(14,Math.min(H-14,H/2+Y[v]+58*Math.sin((performance.now()-s)/280)));c.style.top=aimX+'px';
+  if(performance.now()-s>5000){phase='wait';c.style.display='none';$('f'+j).classList.remove('on');msg('មិនបាញ់');setTimeout(newQ,700);return}
+  raf=requestAnimationFrame(loop)};loop()}
+function fire(i){if(phase!='aim'||i!=shooter)return;phase='fly';cancelAnimationFrame(raf);
+ const v=1-i,b=$('bl'),by=aimX,A=$('a'+i),H=$('arena').clientHeight,W=$('arena').clientWidth,gy=H/2+Y[i]-8;
+ snd('shot');A.classList.remove('shot');void A.offsetWidth;A.classList.add('shot');
+ $('f'+i).classList.remove('on');$('c'+i).style.display='none';b.style.display='block';
+ const from=i==0?W*.06+70:W*.94-70,to=i==0?W*.94-35:W*.06+35,s=performance.now(),D=1100;
+ const step=()=>{const k=Math.min(1,(performance.now()-s)/D);b.style.left=(from+(to-from)*k)+'px';b.style.top=(gy+(by-gy)*Math.min(1,k*3))+'px';
+  if(k<1)return requestAnimationFrame(step);b.style.display='none';
+  if(Math.abs(by-(H/2+Y[v]))<30)hit(v);else{msg('ព្រាក់ផ្លូវ! ខូចគោល');phase='wait';setTimeout(newQ,1000)}};step()}
+function hit(v){hp[v]--;upd();snd('hit');setTimeout(()=>ouch(v),100);const a=$('a'+v);a.classList.remove('hurt');void a.offsetWidth;a.classList.add('hurt');
+ const p=document.createElement('div');p.className='pop';p.textContent=hp[v]<=0?'👻':'💫';a.appendChild(p);setTimeout(()=>p.remove(),950);phase='wait';
+ if(hp[v]<=0){a.classList.add('dead');setTimeout(()=>end(1-v),1400)}else{msg('ត្រូវ! 💥');setTimeout(newQ,1000)}}
+function ouch(v){try{const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain(),f1=AC.createBiquadFilter(),f2=AC.createBiquadFilter(),l=AC.createOscillator(),lg=AC.createGain(),p=v?340:230;
+ o.type='sawtooth';o.frequency.setValueAtTime(p*1.3,t);o.frequency.linearRampToValueAtTime(p*1.55,t+.12);o.frequency.exponentialRampToValueAtTime(p*.8,t+.65);
+ l.frequency.value=7;lg.gain.value=9;l.connect(lg);lg.connect(o.frequency);f1.type=f2.type='bandpass';f1.Q.value=f2.Q.value=6;
+ f1.frequency.setValueAtTime(650,t);f1.frequency.linearRampToValueAtTime(330,t+.55);f2.frequency.setValueAtTime(1000,t);f2.frequency.linearRampToValueAtTime(2300,t+.55);
+ g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(1.3,t+.04);g.gain.exponentialRampToValueAtTime(.001,t+.7);
+ o.connect(f1);o.connect(f2);f1.connect(g);f2.connect(g);g.connect(AC.destination);o.start(t);l.start(t);o.stop(t+.75);l.stop(t+.75)}catch(e){}}
+const os=start;start=function(){os();Y=[0,0];T=[0,0];mv=[0,0];[0,1].forEach(i=>$('a'+i).classList.remove('dead','hurt'))};$('go').onclick=start;
+</script></body></html>
