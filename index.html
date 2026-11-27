@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="km"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ប្រជែងចំនួនគត់</title>
+<link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Moul&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#10243f;--p1:#1f6feb;--p2:#e5484d;--ink:#fff;--card:#1b3a63;--ok:#2ea043}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1a2e}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:'Battambang',system-ui,sans-serif;overflow:hidden}
+#g{height:100%;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.panel{flex:1;display:flex;flex-direction:column;gap:6px;padding:8px;min-height:0}
+.panel.t{transform:rotate(180deg)}
+.hp{display:flex;align-items:center;gap:8px;font-size:14px}
+.bar{flex:1;height:12px;background:#0006;border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:var(--ok);transition:width .3s}
+.q{font-family:'Moul',serif;font-size:clamp(22px,6vw,34px);text-align:center;background:var(--card);border-radius:12px;padding:8px}
+.ch{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1}
+.ch button{font:700 clamp(20px,5vw,28px) 'Battambang';border:0;border-radius:12px;color:#fff;background:var(--c)}
+.ch button:disabled{opacity:.35}
+.ch button.bad{background:#555}
+.act{display:flex;gap:6px}
+.act button{flex:1;font:700 16px 'Battambang';padding:10px;border:0;border-radius:12px;color:#fff}
+.dodge{background:#7c3aed}.fire{background:#f59e0b;display:none}.fire.on{display:block;animation:p .4s infinite alternate}
+@keyframes p{to{transform:scale(1.06)}}
+#arena{position:relative;height:170px;background:linear-gradient(#0003,#0000,#0003);border-block:2px dashed #fff3;flex:none}
+.av{position:absolute;left:50%;font-size:46px;transform:translateX(-50%);transition:left .12s}
+.av.dd{left:20%}
+#a0{bottom:4px}#a1{top:4px}
+.av.hit{filter:drop-shadow(0 0 12px red);animation:sh .3s}
+@keyframes sh{50%{transform:translateX(-50%) rotate(15deg)}}
+.cr{position:absolute;font-size:30px;transform:translate(-50%,-50%);display:none}
+#c0{top:30px}#c1{bottom:30px;top:auto;transform:translate(-50%,50%)}
+.bul{position:absolute;left:50%;font-size:22px;display:none;transform:translateX(-50%)}
+#msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 22px 'Moul';text-shadow:0 2px 6px #000;pointer-events:none;text-align:center}
+#tm{position:absolute;left:0;bottom:0;height:4px;background:#fbbf24;width:100%}
+#ov{position:fixed;inset:0;background:#000b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;z-index:9}
+#ov h1{font:400 28px 'Moul';margin:0;padding:0 12px}
+#ov button{font:700 20px 'Battambang';padding:12px 28px;border:0;border-radius:14px;background:var(--ok);color:#fff}
+</style></head><body>
+<div id="g">
+<div class="panel t" id="P1"></div>
+<div id="arena"><div class="av" id="a1">🧑‍🎓</div><div class="av" id="a0">🧑‍🎓</div>
+<div class="cr" id="c0">🎯</div><div class="cr" id="c1">🎯</div><div class="bul" id="bl">🔸</div>
+<div id="msg"></div><div id="tm"></div></div>
+<div class="panel" id="P0"></div>
+</div>
+<div id="ov"><h1>ប្រជែងចំនួនគត់</h1><div>ឆ្លើយត្រូវមុន = បាញ់ · ឆ្លើយខុស = ដៃគូបាញ់<br>ត្រូវ ១០ គ្រាប់ = ស្លាប់</div><button id="go">ចាប់ផ្ដើម</button></div>
+<script>
+const COL=['var(--p1)','var(--p2)'],$=id=>document.getElementById(id);
+let hp,bul,phase,ans,locked,dUntil,dCd,shooter,aimX,tmr,raf,qTimer;
+const P=[$('P0'),$('P1')];
+P.forEach((p,i)=>{p.innerHTML=`<div class="hp"><span>${i?'ក្រហម':'ខៀវ'}</span><div class="bar"><i id="h${i}"></i></div><b id="n${i}">10</b></div>
+<div class="q" id="q${i}"></div><div class="ch" id="ch${i}"></div>
+<div class="act"><button class="dodge" id="d${i}">ជៀស 🛡️</button><button class="fire" id="f${i}">បាញ់ 🔫</button></div>`;
+$('d'+i).onpointerdown=()=>dodge(i);$('f'+i).onpointerdown=()=>fire(i);});
+const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const sg=n=>n<0?`(−${-n})`:`${n}`;
+function gen(){const o=R(0,3);let a,b,r,t;
+ if(o==0){a=R(-9,9);b=R(-9,9);r=a+b;t=`${sg(a)} + ${sg(b)}`}
+ else if(o==1){a=R(-9,9);b=R(-9,9);r=a-b;t=`${sg(a)} − ${sg(b)}`}
+ else if(o==2){a=R(-5,5);b=R(-5,5);r=a*b;t=`${sg(a)} × ${sg(b)}`}
+ else{b=R(-5,5)||2;r=R(-5,5);a=b*r;t=`${sg(a)} ÷ ${sg(b)}`}
+ return[t,r]}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=R(0,i);[a[i],a[j]]=[a[j],a[i]]}return a}
+function msg(t,ms=900){$('msg').textContent=t;if(ms)setTimeout(()=>{if($('msg').textContent==t)$('msg').textContent=''},ms)}
+function newQ(){if(phase=='over')return;phase='q';locked=[0,0];shooter=-1;
+ $('msg').textContent='';[0,1].forEach(i=>{$('f'+i).classList.remove('on');$('c'+i).style.display='none'});
+ const[t,r]=gen();ans=r;const set=new Set([r]);
+ [r+1,r-1,r+2,r-2,-r,r+10,R(-20,20)].forEach(x=>{if(set.size<4&&!set.has(x))set.add(x)});
+ const opts=[...set].slice(0,4);
+ [0,1].forEach(i=>{$('q'+i).textContent=t+' = ?';const c=$('ch'+i);c.innerHTML='';
+  shuf([...opts]).forEach((v,k)=>{const b=document.createElement('button');b.textContent=v<0?'−'+(-v):v;
+   b.style.setProperty('--c',['#2563eb','#16a34a','#d97706','#9333ea'][k]);b.dataset.v=v;
+   b.onpointerdown=()=>pick(i,v,b);c.appendChild(b)})});
+ const T=9000,s=performance.now();clearInterval(qTimer);
+ qTimer=setInterval(()=>{const k=1-(performance.now()-s)/T;$('tm').style.width=Math.max(0,k*100)+'%';
+  if(k<=0&&phase=='q'){clearInterval(qTimer);msg('អស់ម៉ោង');phase='wait';setTimeout(newQ,900)}},50)}
+function pick(i,v,b){if(phase!='q'||locked[i])return;
+ if(v==ans){clearInterval(qTimer);give(i,'ត្រូវ!')}
+ else{locked[i]=1;b.classList.add('bad');b.disabled=true;clearInterval(qTimer);give(1-i,'ខុស! ដៃគូបាញ់')}}
+function give(j,t){phase='aim';shooter=j;msg(t,700);
+ document.querySelectorAll('.ch button').forEach(b=>b.disabled=true);
+ $('f'+j).classList.add('on');const c=$('c'+j);c.style.display='block';
+ const s=performance.now();cancelAnimationFrame(raf);
+ const loop=()=>{if(phase!='aim')return;aimX=50+42*Math.sin((performance.now()-s)/280);c.style.left=aimX+'%';
+  if(performance.now()-s>5000){phase='wait';c.style.display='none';$('f'+j).classList.remove('on');msg('មិនបាញ់');setTimeout(newQ,700);return}
+  raf=requestAnimationFrame(loop)};loop()}
+function dodge(i){const n=performance.now();if(phase=='over'||n<dCd[i])return;
+ dUntil[i]=n+600;dCd[i]=n+1400;const a=$('a'+i);a.classList.add('dd');setTimeout(()=>a.classList.remove('dd'),600);
+ $('d'+i).style.opacity=.5;setTimeout(()=>$('d'+i).style.opacity=1,1400)}
+function fire(i){if(phase!='aim'||i!=shooter)return;phase='fly';cancelAnimationFrame(raf);
+ const ok=Math.abs(aimX-50)<13,v=1-i,b=$('bl');
+ $('f'+i).classList.remove('on');$('c'+i).style.display='none';
+ const H=$('arena').clientHeight-50;b.style.display='block';b.style.left=ok?'50%':(aimX+'%');
+ const from=i==0?H:0,to=i==0?0:H,s=performance.now(),D=750;
+ const step=()=>{const k=Math.min(1,(performance.now()-s)/D);b.style.top=(from+(to-from)*k+10)+'px';
+  if(k<1)return requestAnimationFrame(step);
+  b.style.display='none';
+  if(ok&&performance.now()>dUntil[v]){hp[v]--;upd();const a=$('a'+v);a.classList.add('hit');setTimeout(()=>a.classList.remove('hit'),400);
+   if(hp[v]<=0)return end(i);msg('ត្រូវ! 💥')}
+  else msg(ok?'ជៀសផុត! 🛡️':'ខុសគោល!');
+  phase='wait';setTimeout(newQ,1000)};step()}
+function upd(){[0,1].forEach(i=>{$('h'+i).style.width=hp[i]*10+'%';$('n'+i).textContent=hp[i]})}
+function end(w){phase='over';const o=$('ov');o.style.display='flex';
+ o.innerHTML=`<h1>🏆 ${w?'ក្រហម':'ខៀវ'} ឈ្នះ!</h1><div>${1-w?'ខៀវ':'ក្រហម'} ស្លាប់ហើយ 💀</div><button onclick="start()">លេងម្ដងទៀត</button>`}
+function start(){hp=[10,10];bul=[0,0];dUntil=[0,0];dCd=[0,0];upd();$('ov').style.display='none';phase='wait';newQ()}
+$('go').onclick=start;
+</script></body></html>
